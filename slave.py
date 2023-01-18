@@ -1,13 +1,13 @@
-import jack_server
+# import jack_server
 import jack
 
-server = jack_server.Server(
-    name="SlaveServer",
-    sync=True,
-    realtime=True,
-    driver="net"
-)
-server.start()
+# server = jack_server.Server(
+#     name="SlaveServer",
+#     sync=True,
+#     realtime=True,
+#     driver="net"
+# )
+# server.start()
 
 client = jack.Client('SlaveClient', no_start_server=True)
 if client.status.server_failed:

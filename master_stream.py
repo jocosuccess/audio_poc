@@ -21,7 +21,7 @@ defaultclientname = os.path.splitext(os.path.basename(next(argv)))[0]
 clientname = next(argv, defaultclientname)
 servername = next(argv, None)
 
-client = jack.Client("StreamClient", servername="default")
+client = jack.Client("MasterStreamClient", servername="default", no_start_server=True)
 
 if client.status.server_started:
     print('JACK server started')
