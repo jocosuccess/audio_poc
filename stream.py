@@ -1,68 +1,84 @@
 #!/usr/bin/env python3
-"""Pass input directly to output.
 
-https://github.com/PortAudio/portaudio/blob/master/test/patest_wire.c
+"""Create a JACK client that copies input audio directly to the outputs.
+
+This is somewhat modeled after the "thru_client.c" example of JACK 2:
+http://github.com/jackaudio/jack2/blob/master/example-clients/thru_client.c
+
+If you have a microphone and loudspeakers connected, this might cause an
+acoustical feedback!
 
 """
-import argparse
+import sys
+import os
+import jack
+import threading
 
-import sounddevice as sd
-import numpy  # Make sure NumPy is loaded before it is used in the callback
-assert numpy  # avoid "imported but unused" message (W0611)
+
+argv = iter(sys.argv)
+# By default, use script name without extension as client name:
+defaultclientname = os.path.splitext(os.path.basename(next(argv)))[0]
+clientname = next(argv, defaultclientname)
+servername = next(argv, None)
+
+client = jack.Client("StreamClient", servername="default")
+
+if client.status.server_started:
+    print('JACK server started')
+if client.status.name_not_unique:
+    print(f'unique name {client.name!r} assigned')
+
+event = threading.Event()
 
 
-def int_or_str(text):
-    """Helper function for argument parsing."""
+@client.set_process_callback
+def process(frames):
+    assert len(client.inports) == len(client.outports)
+    assert frames == client.blocksize
+    for i, o in zip(client.inports, client.outports):
+        o.get_buffer()[:] = i.get_buffer()
+
+
+@client.set_shutdown_callback
+def shutdown(status, reason):
+    print('JACK shutdown!')
+    print('status:', status)
+    print('reason:', reason)
+    event.set()
+
+
+# create two port pairs
+for number in 1, 2:
+    client.inports.register(f'input_{number}')
+    client.outports.register(f'output_{number}')
+
+with client:
+    # When entering this with-statement, client.activate() is called.
+    # This tells the JACK server that we are ready to roll.
+    # Our process() callback will start running now.
+
+    # Connect the ports.  You can't do this before the client is activated,
+    # because we can't make connections to clients that aren't running.
+    # Note the confusing (but necessary) orientation of the driver backend
+    # ports: playback ports are "input" to the backend, and capture ports
+    # are "output" from it.
+
+    capture = client.get_ports(is_physical=True, is_output=True)
+    if not capture:
+        raise RuntimeError('No physical capture ports')
+
+    for src, dest in zip(capture, client.inports):
+        client.connect(src, dest)
+
+    playback = client.get_ports(is_physical=True, is_input=True)
+    if not playback:
+        raise RuntimeError('No physical playback ports')
+
+    for src, dest in zip(client.outports, playback):
+        client.connect(src, dest)
+
+    print('Press Ctrl+C to stop')
     try:
-        return int(text)
-    except ValueError:
-        return text
-
-
-parser = argparse.ArgumentParser(add_help=False)
-parser.add_argument(
-    '-l', '--list-devices', action='store_true',
-    help='show list of audio devices and exit')
-args, remaining = parser.parse_known_args()
-if args.list_devices:
-    print(sd.query_devices())
-    parser.exit(0)
-parser = argparse.ArgumentParser(
-    description=__doc__,
-    formatter_class=argparse.RawDescriptionHelpFormatter,
-    parents=[parser])
-parser.add_argument(
-    '-i', '--input-device', type=int_or_str,
-    help='input device (numeric ID or substring)')
-parser.add_argument(
-    '-o', '--output-device', type=int_or_str,
-    help='output device (numeric ID or substring)')
-parser.add_argument(
-    '-c', '--channels', type=int, default=2,
-    help='number of channels')
-parser.add_argument('--dtype', help='audio data type')
-parser.add_argument('--samplerate', type=float, help='sampling rate')
-parser.add_argument('--blocksize', type=int, help='block size')
-parser.add_argument('--latency', type=float, help='latency in seconds')
-args = parser.parse_args(remaining)
-
-
-def callback(indata, outdata, frames, time, status):
-    if status:
-        print(status)
-    outdata[:] = indata
-
-
-try:
-    with sd.Stream(device=(args.input_device, args.output_device),
-                   samplerate=args.samplerate, blocksize=args.blocksize,
-                   dtype=args.dtype, latency=args.latency,
-                   channels=args.channels, callback=callback):
-        print('#' * 80)
-        print('press Return to quit')
-        print('#' * 80)
-        input()
-except KeyboardInterrupt:
-    parser.exit('')
-except Exception as e:
-    parser.exit(type(e).__name__ + ': ' + str(e))
+        event.wait()
+    except KeyboardInterrupt:
+        print('\nInterrupted by user')
