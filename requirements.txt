@@ -1,4 +1,4 @@
 sounddevice
 JACK-Client
 numpy
-jack-server
+# jack-server
