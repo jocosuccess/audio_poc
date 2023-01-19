@@ -1,4 +1,5 @@
-1) First Solution
+# 1) First Solution
+
 1. git clone https://github.com/jocosuccess/audio_poc.git
 2. cd audio_poc
 3. sudo docker build -t audio_poc .
@@ -22,7 +23,8 @@
     --name "app" audio_poc bash
 
 #########################################################################
-2) Second Solution
+
+# 2) Second Solution
 
 We can implement a connection between docker and host using netjack2.
 https://github.com/jackaudio/jackaudio.github.com/wiki/WalkThrough_User_NetJack2
