@@ -2,7 +2,7 @@ FROM python:3.7.10-buster
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && groupadd we -g 1000 && useradd we -g 1000 -u 1000 -m -G audio
+# RUN apt-get update && groupadd we -g 1000 && useradd we -g 1000 -u 1000 -m -G audio
 
 # install app dependencies
 
