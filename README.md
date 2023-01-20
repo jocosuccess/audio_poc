@@ -14,7 +14,8 @@
     -v /etc/machine-id:/etc/machine-id \
     -v /run/user/$(id -u)/pulse:/run/user/$(id -u)/pulse \
     -v $HOME/.pulse:/home/developer/.pulse \
-    -v /var/lib/dbus:/var/lib/dbus
+    -v /var/lib/dbus:/var/lib/dbus \
+    --device /dev/snd \
     --ipc=host \
     --env HOME='/home/developer' \
     --env DISPLAY \
