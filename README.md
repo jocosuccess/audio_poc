@@ -21,7 +21,7 @@
     --group-add $(getent group audio | cut -d: -f3) \
     --cap-add=sys_nice --ulimit rtprio=95 --ulimit memlock=-1 --shm-size=256m \
     --name "app" audio_poc bash
-5. in docker terminal, run jack_-simple_test
+5. in docker terminal, run jack_-simple_client
     If got a beep, successful
 
 
