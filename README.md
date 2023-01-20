@@ -21,6 +21,9 @@
     --group-add $(getent group audio | cut -d: -f3) \
     --cap-add=sys_nice --ulimit rtprio=95 --ulimit memlock=-1 --shm-size=256m \
     --name "app" audio_poc bash
+5. in docker terminal, run jack_-simple_test
+    If got a beep, successful
+
 
 #########################################################################
 
@@ -43,13 +46,12 @@ https://github.com/jackaudio/jackaudio.github.com/wiki/WalkThrough_User_NetJack2
     --env DISPLAY \    
     --privileged \
     --group-add $(getent group audio | cut -d: -f3) \
+    --cap-add=sys_nice --ulimit rtprio=95 --ulimit memlock=-1 --shm-size=256m \
     --name "app" \
     audio_poc bash
 5. in docker terminal, run the following commands for slave jack server
     jackd -R -d net -a 225.3.19.154 -p 19000    
 6. in host terminal, run the following commands for master jack server
-#########################################################################
-
-
     jackd -d alsa -P merge
     open new terminal and jack_load netmanager
+#########################################################################    
