@@ -14,6 +14,8 @@
     -v /etc/machine-id:/etc/machine-id \
     -v /run/user/$(id -u)/pulse:/run/user/$(id -u)/pulse \
     -v $HOME/.pulse:/home/developer/.pulse \
+    -v /var/lib/dbus:/var/lib/dbus
+    --ipc=host \
     --env HOME='/home/developer' \
     --env DISPLAY \
     --env JACK_NO_AUDIO_RESERVATION=1 \
